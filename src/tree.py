@@ -62,7 +62,7 @@ class Tree:
         
     @property
     def treatment(self):
-        return self._stage
+        return self._treatment
     
     @treatment.setter
     def treatment(self, val):
