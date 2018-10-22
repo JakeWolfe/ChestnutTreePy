@@ -68,8 +68,8 @@ class Tree:
     def treatment(self, val):
         self._treatment = val
     
-    
 # Tests
+"""
 tree = Tree(0);
 
 tree.x = 1
@@ -77,3 +77,4 @@ tree.y = 2
 tree.rating = 3
 
 tree.print_tree()
+"""
