@@ -10,11 +10,9 @@ rating (health), stage (size), and treatment.
 
 class Tree:
     
-    # Jake, I'm leaving the constructor to take in a x, y position as opposed
-    # to a Point class for simplicity.
-    def __init__(self, x = 0, y = 0, rating = 0, stage = 0, treatment = 0):
-        self._x = x
-        self._y = y
+    def __init__(self, r = 0, c = 0, rating = 0, stage = 0, treatment = 0):
+        self._r = r # row
+        self._c = c
         self._rating = rating # health
         self._stage = stage # size
         self._treatment = treatment # treatment
@@ -27,23 +25,25 @@ class Tree:
               str(self.rating) + "\n  Stage: " + str(self.stage) +
               "\n  Treatment: " + str(self.treatment) )
     
-    # Property getters, setters. Jake, let me know if I'm being too verbose
+    # r: row of tree
     @property
-    def x(self):
-        return self._x
+    def r(self):
+        return self._r
     
-    @x.setter
-    def x(self, val):
-        self._x = val
-        
+    @r.setter
+    def r(self, val):
+        self._r = val
+    
+    # c: column of tree
     @property
-    def y(self):
-        return self._y
+    def c(self):
+        return self._c
     
-    @y.setter
-    def y(self, val):
-        self._y = val
-        
+    @c.setter
+    def c(self, val):
+        self._c = val
+    
+    # rating: health of tree ( V, HV, Healthy )
     @property
     def rating(self):
         return self._rating
@@ -51,15 +51,18 @@ class Tree:
     @rating.setter
     def rating(self, val):
         self._rating = val
-        
+    
+    # rating: health of tree ( V, HV, Healthy )
     @property
     def stage(self):
         return self._stage
     
+    # stage: Size of tree, 0 = dead, 1-4 see DBH_STAGEs
     @stage.setter
     def stage(self, val):
         self._stage = val
         
+    # treatment: 0 = untreated, 1 = treated
     @property
     def treatment(self):
         return self._treatment
@@ -68,13 +71,3 @@ class Tree:
     def treatment(self, val):
         self._treatment = val
     
-# Tests
-"""
-tree = Tree(0);
-
-tree.x = 1
-tree.y = 2
-tree.rating = 3
-
-tree.print_tree()
-"""

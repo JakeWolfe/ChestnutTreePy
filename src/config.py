@@ -91,6 +91,13 @@ BEGIN_RATING = [0.2356828, 0.4405286, 1]
 # (orig. values {0.1059603, 0.4282561, 0.2030905, 0.2626932})
 BEGIN_STAGE = [0.1059603, 0.5342164, 0.7373069, 1]
 
+# Used to determine tree reproduction, i.e. the creation of Stage 1 trees 
+REPRODUCTION = [
+    [0, 0.02, 0.32, 3.69],
+    [0, 0.016, 0.78, 2.43],
+	[0, 0.001, 0.03, 7.74]
+]
+
 # Probability of a virulent tree sporing event
 PROB_OF_SPORE_VIRU = 1 - math.exp(-1.5)
 
