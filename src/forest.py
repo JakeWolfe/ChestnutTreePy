@@ -12,14 +12,14 @@ from tree import Tree
 import random
 import math
 import config
-from copy import deepcopy
+from copy import copy, deepcopy
     
 
 class Forest:
     
     num_deaths, num_births = 0, 0
     
-    # TODO: Add getters, setters
+    # TODO: Add getters, setters?
     def __init__(self, rows, cols):
         self.rows = rows
         self.cols = cols
@@ -54,7 +54,8 @@ class Forest:
             # for tree in row
                 #tree.print_tree()
                 
-    # Returns the new array 
+    # Returns a 2D list of lists of trees, i.e., the new grid 
+    # TODO: Add infect function
     def get_next_year(self):
         prev_year = self.grid
         next_year = deepcopy(self.grid)
@@ -63,10 +64,8 @@ class Forest:
         random.shuffle(coords)
         
         for coord in coords:
-            r = coord[0]
-            c = coord[1]
-            tree = prev_year[r][c]
-            t_tree = next_year[r][c]
+            tree = prev_year[coord[0]][coord[1]] # original tree
+            t_tree = next_year[coord[0]][coord[1]] # transformed tree
             
             if tree.stage != config.DEAD:
                 rand = random.random()
@@ -76,7 +75,7 @@ class Forest:
                 i = 0
                 while rand >=  config.NEW_STAGE_CDF[next_stage_row][i] and \
                     i < config.DBH_STAGE4 + 1:
-                        next_year[r][c].stage = i
+                        t_tree.stage = i
                         i += 1
                 
                 if tree.stage == config.DEAD:
@@ -106,28 +105,34 @@ class Forest:
                     while p > l :
                         p = p * random.random()
                         rand_poisson += 1
-                    k -= 1
-                    
-                    # while rand_poisson > 0 and 
-                    
-                    
-                    
-                    
-                    
-                
-                
-            #tree.print_tree()
-            #if( prev_year[row][col] = 
+                    rand_poisson -= 1
+                                        
+                    sites = copy(coords)
+                    random.shuffle(sites)
+                    while rand_poisson > 0 and len(sites) > 0:
+                        site = sites.pop()
+                        s_r = site[0]
+                        s_c = site[1]
+                        if prev_year[s_r][s_c].stage == config.DEAD:
+                            next_year[s_r][s_c].stage = config.DBH_STAGE1
+                            next_year[s_r][s_c].rating = config.HEALTHY
+                            self.num_births += 1
+                            rand_poisson -= 1
         
-        self.print_forest()
-
+        return next_year
+        
+    # Generates a new grid for the Forest and sets the active grid to
+    # the grid of the next year
+    def set_next_year(self):
+        next_year = self.get_next_year()
+        self.grid = next_year
 
             
                 
 # Testing
-forest = Forest(3,8)
-forest.grid = forest.generate_grid()
-# forest.grid[1][0].stage = 9
-forest.print_forest()
-forest.get_next_year()
-
+forest = Forest(3,12)
+forest.grid = forest.generate_grid() # maybe initialize on new grid?
+for i in range(10):
+    print("Year", i)
+    forest.print_forest()
+    forest.set_next_year
