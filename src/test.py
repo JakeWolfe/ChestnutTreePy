@@ -9,21 +9,42 @@ under some predefined biological-enviornment parameters defined in config.py
 """ 
 
 from forest import Forest
-from PyQt5.QtCore import QDateTime, Qt, QTimer, QRect, QRectF, QPoint
+from PyQt5.QtCore import QDateTime, Qt, QTimer, QRect, QRectF, QPoint, pyqtSignal
 from PyQt5.QtWidgets import (QApplication, QCheckBox, QComboBox, QDateTimeEdit,
         QDial, QDialog, QGridLayout, QGroupBox, QHBoxLayout, QLabel, QLineEdit,
         QProgressBar, QPushButton, QRadioButton, QScrollBar, QSizePolicy,
         QSlider, QSpinBox, QStyleFactory, QTableWidget, QTabWidget, QTextEdit,
-        QVBoxLayout, QWidget, QGraphicsScene, QGraphicsView)
+        QVBoxLayout, QWidget, QGraphicsScene, QGraphicsView, QMainWindow)
 from PyQt5.QtGui import QPen, QBrush, QColor
 
 
+class ForestViewer(QMainWindow):
+    resized = pyqtSignal()
+    def  __init__(self, forest, parent=None):
+        super(ForestViewer, self).__init__(parent=parent)
+        self.forest = forest
+        self.widgetGallery = WidgetGallery( self.forest )
+        #self.createDockerWidget()
+        self.resized.connect(self.handleResize)
+        self.setCentralWidget( self.widgetGallery)
+
+    def resizeEvent(self, event):
+        self.resized.emit()
+        return super(ForestViewer, self).resizeEvent(event)
+
+    def handleResize(self):
+        print(self.size())
+        self.widgetGallery.tester()#.getSceneRect()
+    
+
 class WidgetGallery(QDialog):
+    can_i_do = 3
     def __init__(self, forest, parent=None):
         super(WidgetGallery, self).__init__(parent)
+        self.setContentsMargins(1,1,1,1)
         self.forest = forest
         self.originalPalette = QApplication.palette()
-
+        self.resize(800, 600)
         styleComboBox = QComboBox()
         styleComboBox.addItems(QStyleFactory.keys())
 
@@ -48,15 +69,15 @@ class WidgetGallery(QDialog):
         disableWidgetsCheckBox.toggled.connect(self.bottomLeftTabWidget.setDisabled)
         disableWidgetsCheckBox.toggled.connect(self.bottomRightGroupBox.setDisabled)
 
-        mainLayout = QGridLayout()
-        mainLayout.addWidget(self.forest_view, 0, 0)
-        mainLayout.addWidget(self.bottomRightGroupBox, 0, 1)
-        mainLayout.addWidget(self.progressBar, 1, 1)
+        self.mainLayout = QGridLayout()
+        self.mainLayout.addWidget(self.forest_view, 0, 0)
+        self.mainLayout.addWidget(self.bottomRightGroupBox, 0, 1)
+        self.mainLayout.addWidget(self.progressBar, 1, 0, 1, 2)
         #mainLayout.setRowStretch(0, 1)
         #mainLayout.setRowStretch(0, 1)
-        mainLayout.setColumnStretch(0, 5)
-        mainLayout.setColumnStretch(1, 2)
-        self.setLayout(mainLayout)
+        self.mainLayout.setColumnStretch(0, 5)
+        self.mainLayout.setColumnStretch(1, 2)
+        self.setLayout(self.mainLayout)
 
         self.setWindowTitle("Chestnut Blight Forest Simulator")
         self.changeStyle('Fusion')
@@ -77,19 +98,50 @@ class WidgetGallery(QDialog):
         self.progressBar.setValue(curVal + (maxVal - curVal) / 100)
 
     def createForestView(self):
-        forest_scene = QGraphicsScene()
-        if self.forest == None:
-            print("no forest")
-            return
-        cell_w = 25
-        cell_h = 25
+        forest_scene = QGraphicsScene() #init size?
+#        forest_scene.setBackgroundBrush(QBrush(QColor("blue")))
+        self.forest_view = QGraphicsView(forest_scene)
+        self.forest_view.setContentsMargins(5,5,5,5)
+        self.forest_view.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)
+        #self.forest_view.setGeometry(1,1,1,1)
+        if self.forest != None:
+            self.paintGrid()
+
+
+    def paintGrid(self):
         grid = self.forest
+        if grid == None:
+            print("Return Text('No Forest')")
+            return
+        view = self.forest_view
+        scene = view.scene()
+        size = view.size()
+        w = (size.width() - 2)
+        h = (size.height() - 2)
+        view.setSceneRect(0, 0, w, h)
+        print(size)
+        cell_w = w / grid.cols
+        cell_h = h / grid.rows
+        if cell_w < cell_h:
+            cell_h = cell_w
+        else:
+            cell_w = cell_h
+        scene.clear()
         for r in range(grid.rows):
             for c in range(grid.cols):
                 rect = QRectF(c * cell_w, r * cell_h, cell_w, cell_h)
                 brush = QBrush(QColor("white"))
-                forest_scene.addRect(rect, QPen(), brush)        
-        self.forest_view = QGraphicsView(forest_scene)
+                scene.addRect(rect, QPen(), brush)
+                
+    def paintTrees(self):
+        print("teee")
+    
+    
+    # Scene work
+    def tester(self):
+        if(self.forest_view):
+            self.paintGrid()#print(self.forest_view.size())
+            #print(self.scene().size())
 
     def createTopLeftGroupBox(self):
         self.topLeftGroupBox = QGroupBox("Group 1")
@@ -140,7 +192,6 @@ class WidgetGallery(QDialog):
         tableWidget = QTableWidget(10, 10)
 
         tab1hbox = QHBoxLayout()
-        tab1hbox.setContentsMargins(5, 5, 5, 5)
         tab1hbox.addWidget(tableWidget)
         tab1.setLayout(tab1hbox)
 
@@ -216,7 +267,7 @@ if __name__ == '__main__':
     
     test_forest = Forest(50, 50)
     test_forest.init_random()
-    gallery = WidgetGallery( test_forest )
+    gallery = ForestViewer( test_forest )
     gallery.show()
     app.aboutToQuit.connect(app.deleteLater)
     sys.exit(app.exec_()) 
