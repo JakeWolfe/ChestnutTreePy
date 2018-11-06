@@ -53,7 +53,10 @@ class Forest:
             # above only prints stage, uncomment below for full tree details
             # for tree in row
                 #tree.print_tree()
-                
+    
+    def init_random(self):
+        self.grid = self.generate_grid()
+        
     # Returns a 2D list of lists of trees, i.e., the new grid 
     # TODO: Add infect function
     def get_next_year(self):
@@ -64,20 +67,24 @@ class Forest:
         random.shuffle(coords)
         
         for coord in coords:
+            r = coord[0]
+            c = coord[1]
             tree = prev_year[coord[0]][coord[1]] # original tree
             t_tree = next_year[coord[0]][coord[1]] # transformed tree
             
             if tree.stage != config.DEAD:
                 rand = random.random()
-                next_stage_row = (tree.rating - 1) * config.DBH_STAGE4 + \
+                next_stage_row = ((tree.rating - 1) * config.DBH_STAGE4) + \
                     (tree.stage - 1)
+
                     
                 i = 0
                 while rand >=  config.NEW_STAGE_CDF[next_stage_row][i] and \
                     i < config.DBH_STAGE4 + 1:
-                        t_tree.stage = i
+                        next_year[r][c].stage = i
                         i += 1
                 
+                # block not required?
                 if tree.stage == config.DEAD:
                     t_tree.stage = config.DEAD
                     t_tree.treatment = config.UNTREATED
@@ -89,7 +96,7 @@ class Forest:
                     i = 0
                     while i < config.HEALTHY - 1 and rand >= \
                         config.NEW_RATING_CDF[next_rating_row][i]:
-                            t_tree.rating = i + 1
+                            next_year[r][c].rating = i + 1
                             i += 1
                     
                     #if tree.rating == config.V:
@@ -114,6 +121,7 @@ class Forest:
                         s_r = site[0]
                         s_c = site[1]
                         if prev_year[s_r][s_c].stage == config.DEAD:
+                            print("add new tree")
                             next_year[s_r][s_c].stage = config.DBH_STAGE1
                             next_year[s_r][s_c].rating = config.HEALTHY
                             self.num_births += 1
@@ -130,9 +138,9 @@ class Forest:
             
                 
 # Testing
-forest = Forest(3,12)
-forest.grid = forest.generate_grid() # maybe initialize on new grid?
-for i in range(10):
-    print("Year", i)
-    forest.print_forest()
-    forest.set_next_year
+#forest = Forest(3,14)
+#forest.grid = forest.generate_grid() # maybe initialize on new grid?
+#for i in range(100):
+#    print("Year", i)
+#    forest.print_forest()
+#    forest.set_next_year()
