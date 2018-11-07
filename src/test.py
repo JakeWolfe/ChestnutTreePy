@@ -33,12 +33,10 @@ class ForestViewer(QMainWindow):
         return super(ForestViewer, self).resizeEvent(event)
 
     def handleResize(self):
-        print(self.size())
         self.widgetGallery.tester()#.getSceneRect()
     
 
 class WidgetGallery(QDialog):
-    can_i_do = 3
     def __init__(self, forest, parent=None):
         super(WidgetGallery, self).__init__(parent)
         self.setContentsMargins(1,1,1,1)
@@ -101,7 +99,7 @@ class WidgetGallery(QDialog):
         forest_scene = QGraphicsScene() #init size?
 #        forest_scene.setBackgroundBrush(QBrush(QColor("blue")))
         self.forest_view = QGraphicsView(forest_scene)
-        self.forest_view.setContentsMargins(5,5,5,5)
+#        self.forest_view.setContentsMargins(5,5,5,5)
         self.forest_view.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)
         #self.forest_view.setGeometry(1,1,1,1)
         if self.forest != None:
@@ -116,16 +114,34 @@ class WidgetGallery(QDialog):
         view = self.forest_view
         scene = view.scene()
         size = view.size()
-        w = (size.width() - 2)
-        h = (size.height() - 2)
-        view.setSceneRect(0, 0, w, h)
-        print(size)
+#        w = (size.width())
+#        h = (size.height())
+        rect = scene.itemsBoundingRect()
+        w = float(view.contentsRect().width())
+        h = float(view.contentsRect().height())
+        print(rect)
+        print(view.contentsRect())
+        print(view.childrenRect())
+#        w = rect.width()
+#        h = rect.height()
+#        w = w if w > rect.width() else rect.width()
+#        h = h if h > rect.height() else rect.height()
+        
+        view.setSceneRect(0, 0, w, h);
+        drect = QRectF(0, 0, w, h)
+        scene.clear()
+        scene.addRect(drect, QPen(), QBrush(QColor("blue")))
+#        view.setSceneRect(0,0,w,h)
+#        scene.setSceneRect(0,0,w,h)
+#        view.setGeometry(0, 0, w, h)
+#        view.setGeometry(0, 0, w, h)
+        
         cell_w = w / grid.cols
         cell_h = h / grid.rows
-        if cell_w < cell_h:
-            cell_h = cell_w
-        else:
-            cell_w = cell_h
+#        if cell_w < cell_h:
+#            cell_h = cell_w
+#        else:
+#            cell_w = cell_h
         scene.clear()
         for r in range(grid.rows):
             for c in range(grid.cols):
@@ -265,7 +281,7 @@ if __name__ == '__main__':
     app = QApplication(sys.argv)
     # Use this when debugging w/ IPython in Spyder IDE
     
-    test_forest = Forest(50, 50)
+    test_forest = Forest(30, 30)
     test_forest.init_random()
     gallery = ForestViewer( test_forest )
     gallery.show()
