@@ -38,8 +38,8 @@ class Forest:
                     i = 0
                     while i <= len(config.POP_2002_CDF):
                         if tree_type < config.POP_2002_CDF[i]:
-                            rating = i / config.DBH_STAGE4 + 1
-                            stage = i % config.DBH_STAGE4 + 1
+                            rating = int(i / config.DBH_STAGE4) + 1
+                            stage = int(i % config.DBH_STAGE4) + 1
                             break
                         i += 1
                 new_tree = Tree(row, col, rating, stage, config.UNTREATED)
@@ -69,17 +69,16 @@ class Forest:
         for coord in coords:
             r = coord[0]
             c = coord[1]
-            tree = prev_year[coord[0]][coord[1]] # original tree
-            t_tree = next_year[coord[0]][coord[1]] # transformed tree
+            tree = prev_year[r][c] # original tree
+            t_tree = next_year[r][c] # transformed tree
             
             if tree.stage != config.DEAD:
                 rand = random.random()
-                next_stage_row = ((tree.rating - 1) * config.DBH_STAGE4) + \
-                    (tree.stage - 1)
-
+                next_stage_row = int(((tree.rating - 1) * config.DBH_STAGE4)) \
+                    + (tree.stage - 1)
                     
                 i = 0
-                while rand >=  config.NEW_STAGE_CDF[next_stage_row][i] and \
+                while rand >= config.NEW_STAGE_CDF[next_stage_row][i] and \
                     i < config.DBH_STAGE4 + 1:
                         next_year[r][c].stage = i
                         i += 1
@@ -91,9 +90,11 @@ class Forest:
                     # TODO: decide if reset tree treatment here
                 else:
                     rand = random.random()
-                    next_rating_row = tree.treatment * (config.HEALTHY - 1) \
+                    next_rating_row = int(tree.treatment * (config.HEALTHY - 1)) \
                         + (tree.rating - 1)
                     i = 0
+                    print(type(next_rating_row))
+                    print(type(i))
                     while i < config.HEALTHY - 1 and rand >= \
                         config.NEW_RATING_CDF[next_rating_row][i]:
                             next_year[r][c].rating = i + 1
@@ -121,12 +122,12 @@ class Forest:
                         s_r = site[0]
                         s_c = site[1]
                         if prev_year[s_r][s_c].stage == config.DEAD:
-                            print("add new tree")
                             next_year[s_r][s_c].stage = config.DBH_STAGE1
                             next_year[s_r][s_c].rating = config.HEALTHY
                             self.num_births += 1
                             rand_poisson -= 1
         
+        print("hooray!")
         return next_year
         
     # Generates a new grid for the Forest and sets the active grid to

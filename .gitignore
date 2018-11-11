@@ -7,3 +7,6 @@ __pycache__/
 # Spyder project settings
 .spyderproject
 .spyproject
+
+# VC code config
+*.vscode
