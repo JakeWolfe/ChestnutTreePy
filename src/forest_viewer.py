@@ -37,7 +37,7 @@ class ForestViewer(QMainWindow):
         return super(ForestViewer, self).resizeEvent(event)
 
     def handleResize(self):
-        self.ForestDialog.tester()
+        self.ForestDialog.paintGrid()
 
 class ForestDialog(QDialog):
     resized2 = pyqtSignal()
@@ -88,8 +88,8 @@ class ForestDialog(QDialog):
 
 
     def transition(self):
-        print("hello transition!")
         self.forest.set_next_year()
+        print("done!")
         self.paintGrid()
 
             
@@ -135,7 +135,6 @@ class ForestDialog(QDialog):
         
         rad = min(cell_w, cell_h)
         grid = forest.grid
-        forest.print_forest()
 
         for r in range(forest.rows):
             for c in range(forest.cols):
@@ -155,10 +154,6 @@ class ForestDialog(QDialog):
                     xe = x + ((cell_w - mrad) / 2)
                     ye = y + ((cell_h - mrad) / 2)
                     scene.addEllipse(xe, ye, mrad, mrad, QPen(trans), QBrush(qcol))
-                
-    #TODO: Decide if split paint needed         
-    def paintTrees(self):
-        print("teee")
     
     def colorFromTree(self, tree):
         col = "transparent"
@@ -170,12 +165,6 @@ class ForestDialog(QDialog):
             }
             col = col_switch.get(tree.rating)
         return QColor(col)
-        
-    # Scene work
-    def tester(self):
-        if(self.forest_view):
-            self.paintGrid()#print(self.forest_view.size())
-            #print(self.scene().size())   
 
 
 if __name__ == '__main__':

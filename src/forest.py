@@ -9,11 +9,11 @@ under some predefined biological-enviornment parameters defined in config.py
 """
 
 from tree import Tree
+import sys
 import math
 import config
 from random import random, shuffle
 from copy import copy, deepcopy
-    
 
 class Forest:
     
@@ -99,10 +99,8 @@ class Forest:
                             t_tree.rating = i + 1
                             break
                     
-                    #if tree.rating == config.V:
-                        #infect(config.V, r, c, prev_year, next_year)
-                    #else if tree.rating == config.HV
-                        #infect(config.HV, ...)
+                    if tree.rating == config.V or tree.rating == config.HV:
+                        self.infect(tree.rating, r, c, prev_year, next_year)
                     
                     rep = config.REPRODUCTION[tree.rating - 1][tree.stage - 1]
                     l = math.exp(-rep)
@@ -129,17 +127,71 @@ class Forest:
         return next_year
     
 #    Prelim    
-    def infect(self):
-        maxInfections = 3
-        events = math.round( random() * maxInfections )
+    def infect(self, r, c, rating, prev_year, next_year):
+        max_infections = round(math.exp(config.NUM_INF_CDF[0] * random() \
+            - config.NUM_INF_CDF[1]))
+        events = round( random() * max_infections )
         if events < 1:
             events = 1
-        if treeType == config.V:
+        if rating == config.V:
             distribution = config.V_INFECT_RANGE_PROB_8M_INT
         else:
             distribution = config.V_INFECT_RANGE_PROB_8M_INT
         infections = 0
         sporings = 0
+        while infections < events and sporings < config.SPORE_SCALAR * events:
+            if rating == config.HV and random() < config.PER_HV_TO_HV:
+                infect_type = config.HV
+            else:
+                infect_type = config.V
+            infect_range = random() * len(distribution) * config.DIST_CLASS
+            if infect_range <= config.DIST_CLASS:
+                infect_range = config.DIST_CLASS
+            attempt_coord = self.get_random_point(r, c, infect_range)
+            point_dist = self.get_distance(r, c, attempt_coord[0], attempt_coord[1])
+            spore_land_prob = distribution[0]
+            i = 1
+            while i < len(distribution):
+                if point_dist < (i * config.DIST_CLASS):
+                    spore_land_prob = distribution[i] - distribution[i - 1]
+                i += 1
+            attempt_tree = prev_year[attempt_coord[0]][attempt_coord[1]]
+            if random() < spore_land_prob and attempt_tree.stage != config.DEAD:
+                next_year[attempt_tree.r][attempt_tree.c].rating = infect_type
+                infections += 1
+            sporings += 1
+
+    
+    # Returns a tuple coordinate (r', c') of a random point at
+    # 'range' distance of coordinate (r, c)
+    def get_random_point(self, r, c, p_range):
+        p_r = r
+        p_c = c
+        increment_r = random() < 0.5
+        increment_c = random() < 0.5
+        distance = sys.float_info.max
+        while abs(distance - p_range) > config.SITE_SIZE and distance > 0:
+            if random() < 0.5:
+                p_r = p_r + 1 if increment_r else p_r - 1
+                if not self.is_in_grid(p_r, p_c):
+                    p_r = r
+                    increment_r = not increment_r
+            else:
+                p_c = p_c + 1 if increment_c else p_c -1
+                if not self.is_in_grid(p_r, p_c):
+                    p_c = c
+                    increment_c = not increment_c
+            distance = self.get_distance(r, c, p_r, p_c)
+        return ( p_r, p_c )
+
+
+
+    def is_in_grid(self, r, c):
+        return r >= 0 and c >= 0 and r < self.rows and c < self.cols
+
+    def get_distance(self, r1, c1, r2, c2):
+        return math.sqrt(math.pow(abs(r2 - r1) * config.SITE_SIZE, 2) \
+            + math.pow(abs(c2 - c1) * config.SITE_SIZE, 2))
 
     # Generates a new grid for the Forest and sets the active grid to
     # the grid of the next year
@@ -150,9 +202,9 @@ class Forest:
             
                 
 # Testing
-forest = Forest(4,16)
-forest.grid = forest.generate_grid() # maybe initialize on new grid?
-forest.print_forest()
-for i in range( 0, 20 ):
-    forest.set_next_year()
-forest.print_forest()
+#forest = Forest(4,16)
+#forest.grid = forest.generate_grid() # maybe initialize on new grid?
+#forest.print_forest()
+#for i in range( 0, 20 ):
+#    forest.set_next_year()
+#forest.print_forest()
