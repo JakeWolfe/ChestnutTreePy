@@ -21,7 +21,7 @@ class Tree:
         # May need to define custom '==' operator or .equals function
         
     def print_tree(self):
-        print( "Tree (" + str(self.x) + ", " + str(self.y) + "):\n  Rating: " +
+        print( "Tree (" + str(self.r) + ", " + str(self.c) + "):\n  Rating: " +
               str(self.rating) + "\n  Stage: " + str(self.stage) +
               "\n  Treatment: " + str(self.treatment) )
     

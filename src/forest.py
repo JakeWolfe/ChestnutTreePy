@@ -9,9 +9,9 @@ under some predefined biological-enviornment parameters defined in config.py
 """
 
 from tree import Tree
-import random
 import math
 import config
+from random import random, shuffle
 from copy import copy, deepcopy
     
 
@@ -32,9 +32,9 @@ class Forest:
             for col in range(self.cols):
                 rating = 0 # TODO enum?
                 stage = 0
-                rand = random.random()
+                rand = random()
                 if rand < config.TREE_DENSITY:
-                    tree_type = random.random()
+                    tree_type = random()
                     i = 0
                     while i <= len(config.POP_2002_CDF):
                         if tree_type < config.POP_2002_CDF[i]:
@@ -53,6 +53,7 @@ class Forest:
             # above only prints stage, uncomment below for full tree details
             # for tree in row
                 #tree.print_tree()
+        print("---------------------------")
     
     def init_random(self):
         self.grid = self.generate_grid()
@@ -64,7 +65,7 @@ class Forest:
         next_year = deepcopy(self.grid)
                 
         coords = [(r,c) for r in range(self.rows) for c in range(self.cols)]
-        random.shuffle(coords)
+        shuffle(coords)
         
         for coord in coords:
             r = coord[0]
@@ -73,32 +74,30 @@ class Forest:
             t_tree = next_year[r][c] # transformed tree
             
             if tree.stage != config.DEAD:
-                rand = random.random()
+                rand = random()
                 next_stage_row = int(((tree.rating - 1) * config.DBH_STAGE4)) \
                     + (tree.stage - 1)
                     
-                i = 0
-                while rand >= config.NEW_STAGE_CDF[next_stage_row][i] and \
-                    i < config.DBH_STAGE4 + 1:
-                        next_year[r][c].stage = i
-                        i += 1
+                for i in range(0, config.DBH_STAGE4 + 1):
+                    if rand < config.NEW_STAGE_CDF[next_stage_row][i]:
+                        t_tree.stage = i
+                        break
                 
                 # block not required?
                 if tree.stage == config.DEAD:
                     t_tree.stage = config.DEAD
                     t_tree.treatment = config.UNTREATED
+                    
                     # TODO: decide if reset tree treatment here
                 else:
-                    rand = random.random()
+                    rand = random()
                     next_rating_row = int(tree.treatment * (config.HEALTHY - 1)) \
                         + (tree.rating - 1)
-                    i = 0
-                    print(type(next_rating_row))
-                    print(type(i))
-                    while i < config.HEALTHY - 1 and rand >= \
-                        config.NEW_RATING_CDF[next_rating_row][i]:
-                            next_year[r][c].rating = i + 1
-                            i += 1
+                    
+                    for i in range(0, config.HEALTHY - 1):
+                        if rand < config.NEW_RATING_CDF[next_rating_row][i]:
+                            t_tree.rating = i + 1
+                            break
                     
                     #if tree.rating == config.V:
                         #infect(config.V, r, c, prev_year, next_year)
@@ -107,16 +106,16 @@ class Forest:
                     
                     rep = config.REPRODUCTION[tree.rating - 1][tree.stage - 1]
                     l = math.exp(-rep)
-                    p = random.random()
+                    p = random()
                     rand_poisson = 1
                     
                     while p > l :
-                        p = p * random.random()
+                        p = p * random()
                         rand_poisson += 1
                     rand_poisson -= 1
                                         
                     sites = copy(coords)
-                    random.shuffle(sites)
+                    shuffle(sites)
                     while rand_poisson > 0 and len(sites) > 0:
                         site = sites.pop()
                         s_r = site[0]
@@ -127,9 +126,21 @@ class Forest:
                             self.num_births += 1
                             rand_poisson -= 1
         
-        print("hooray!")
         return next_year
-        
+    
+#    Prelim    
+    def infect(self):
+        maxInfections = 3
+        events = math.round( random() * maxInfections )
+        if events < 1:
+            events = 1
+        if treeType == config.V:
+            distribution = config.V_INFECT_RANGE_PROB_8M_INT
+        else:
+            distribution = config.V_INFECT_RANGE_PROB_8M_INT
+        infections = 0
+        sporings = 0
+
     # Generates a new grid for the Forest and sets the active grid to
     # the grid of the next year
     def set_next_year(self):
@@ -139,9 +150,9 @@ class Forest:
             
                 
 # Testing
-#forest = Forest(3,14)
-#forest.grid = forest.generate_grid() # maybe initialize on new grid?
-#for i in range(100):
-#    print("Year", i)
-#    forest.print_forest()
-#    forest.set_next_year()
+forest = Forest(4,16)
+forest.grid = forest.generate_grid() # maybe initialize on new grid?
+forest.print_forest()
+for i in range( 0, 20 ):
+    forest.set_next_year()
+forest.print_forest()

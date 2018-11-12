@@ -135,7 +135,6 @@ class ForestDialog(QDialog):
         
         rad = min(cell_w, cell_h)
         grid = forest.grid
-        print("----------------------------------------------")
         forest.print_forest()
 
         for r in range(forest.rows):
@@ -184,7 +183,7 @@ if __name__ == '__main__':
     import sys
 
     app = QApplication(sys.argv)    
-    test_forest = Forest(10, 10)
+    test_forest = Forest(50, 50)
     test_forest.init_random()
     gallery = ForestViewer( test_forest )
     gallery.show()
