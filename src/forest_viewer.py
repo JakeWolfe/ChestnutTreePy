@@ -172,7 +172,7 @@ if __name__ == '__main__':
     import sys
 
     app = QApplication(sys.argv)    
-    test_forest = Forest(50, 50)
+    test_forest = Forest(25, 25)
     test_forest.init_random()
     gallery = ForestViewer( test_forest )
     gallery.show()

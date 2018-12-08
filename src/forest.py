@@ -67,6 +67,8 @@ class Forest:
         coords = [(r,c) for r in range(self.rows) for c in range(self.cols)]
         shuffle(coords)
         
+        max_infections = 
+        
         for coord in coords:
             r = coord[0]
             c = coord[1]
@@ -83,46 +85,39 @@ class Forest:
                         t_tree.stage = i
                         break
                 
-                # block not required?
-                if tree.stage == config.DEAD:
-                    t_tree.stage = config.DEAD
-                    t_tree.treatment = config.UNTREATED
-                    
-                    # TODO: decide if reset tree treatment here
-                else:
-                    rand = random()
-                    next_rating_row = int(tree.treatment * (config.HEALTHY - 1)) \
-                        + (tree.rating - 1)
-                    
-                    for i in range(0, config.HEALTHY - 1):
-                        if rand < config.NEW_RATING_CDF[next_rating_row][i]:
-                            t_tree.rating = i + 1
-                            break
-                    
-                    if tree.rating == config.V or tree.rating == config.HV:
-                        self.infect(tree.rating, r, c, prev_year, next_year)
-                    
-                    rep = config.REPRODUCTION[tree.rating - 1][tree.stage - 1]
-                    l = math.exp(-rep)
-                    p = random()
-                    rand_poisson = 1
-                    
-                    while p > l :
-                        p = p * random()
-                        rand_poisson += 1
-                    rand_poisson -= 1
-                                        
-                    sites = copy(coords)
-                    shuffle(sites)
-                    while rand_poisson > 0 and len(sites) > 0:
-                        site = sites.pop()
-                        s_r = site[0]
-                        s_c = site[1]
-                        if prev_year[s_r][s_c].stage == config.DEAD:
-                            next_year[s_r][s_c].stage = config.DBH_STAGE1
-                            next_year[s_r][s_c].rating = config.HEALTHY
-                            self.num_births += 1
-                            rand_poisson -= 1
+                rand = random()
+                next_rating_row = int(tree.treatment * (config.HEALTHY - 1)) \
+                    + (tree.rating - 1)
+                
+                for i in range(0, config.HEALTHY - 1):
+                    if rand < config.NEW_RATING_CDF[next_rating_row][i]:
+                        t_tree.rating = i + 1
+                        break
+                
+                if tree.rating == config.V or tree.rating == config.HV:
+                    self.infect(tree.rating, r, c, prev_year, next_year)
+                
+                rep = config.REPRODUCTION[tree.rating - 1][tree.stage - 1]
+                l = math.exp(-rep)
+                p = random()
+                rand_poisson = 1
+                
+                while p > l :
+                    p = p * random()
+                    rand_poisson += 1
+                rand_poisson -= 1
+                                    
+                sites = copy(coords)
+                shuffle(sites)
+                while rand_poisson > 0 and len(sites) > 0:
+                    site = sites.pop()
+                    s_r = site[0]
+                    s_c = site[1]
+                    if prev_year[s_r][s_c].stage == config.DEAD:
+                        next_year[s_r][s_c].stage = config.DBH_STAGE1
+                        next_year[s_r][s_c].rating = config.HEALTHY
+                        self.num_births += 1
+                        rand_poisson -= 1
         
         return next_year
     
@@ -136,9 +131,11 @@ class Forest:
         if rating == config.V:
             distribution = config.V_INFECT_RANGE_PROB_8M_INT
         else:
-            distribution = config.V_INFECT_RANGE_PROB_8M_INT
+            distribution = config.HV_INFECT_RANGE_PROB_8M_INT
         infections = 0
         sporings = 0
+#        print("events", events)
+#        print("infections", infections)
         while infections < events and sporings < config.SPORE_SCALAR * events:
             if rating == config.HV and random() < config.PER_HV_TO_HV:
                 infect_type = config.HV
@@ -150,11 +147,12 @@ class Forest:
             attempt_coord = self.get_random_point(r, c, infect_range)
             point_dist = self.get_distance(r, c, attempt_coord[0], attempt_coord[1])
             spore_land_prob = distribution[0]
-            i = 1
-            while i < len(distribution):
-                if point_dist < (i * config.DIST_CLASS):
-                    spore_land_prob = distribution[i] - distribution[i - 1]
-                i += 1
+            land_prob_index = int(point_dist / config.DIST_CLASS)
+            spore_land_prob = distribution[land_prob_index]
+#            while i < len(distribution):
+#                if point_dist < (i * config.DIST_CLASS):
+#                    spore_land_prob = distribution[i] - distribution[i - 1]
+#                i += 1
             attempt_tree = prev_year[attempt_coord[0]][attempt_coord[1]]
             if random() < spore_land_prob and attempt_tree.stage != config.DEAD:
                 next_year[attempt_tree.r][attempt_tree.c].rating = infect_type
@@ -202,9 +200,10 @@ class Forest:
             
                 
 # Testing
-#forest = Forest(4,16)
+#forest = Forest(50,50)
 #forest.grid = forest.generate_grid() # maybe initialize on new grid?
 #forest.print_forest()
 #for i in range( 0, 20 ):
 #    forest.set_next_year()
+#    print(i)
 #forest.print_forest()
