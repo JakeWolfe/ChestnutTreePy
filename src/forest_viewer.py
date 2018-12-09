@@ -2,6 +2,9 @@
 """
 Created on Sun Oct 21 17:50:28 2018
 
+A visualization for the Chestnut Blight fungus simulation.
+
+
 A Forest keeps track of all of trees contained within some rows x cols grid
 under some predefined biological-enviornment parameters defined in config.py
 
@@ -10,41 +13,32 @@ under some predefined biological-enviornment parameters defined in config.py
 
 from forest import Forest
 from PyQt5.QtCore import QRectF, pyqtSignal
-from PyQt5.QtWidgets import (QApplication, QCheckBox, QComboBox, QDateTimeEdit,
-        QDial, QDialog, QGridLayout, QGroupBox, QHBoxLayout, QLabel, QLineEdit,
-        QProgressBar, QPushButton, QRadioButton, QScrollBar, QSizePolicy,
-        QSlider, QSpinBox, QStyleFactory, QTableWidget, QTabWidget, QTextEdit,
-        QVBoxLayout, QWidget, QGraphicsScene, QGraphicsView, QMainWindow,
-        QFormLayout, QLayout)
+from PyQt5.QtWidgets import (QApplication, QMainWindow, QStyleFactory, 
+        QGraphicsScene, QGraphicsView, QDialog, QGridLayout, QGroupBox, 
+        QSpinBox, QCheckBox, QHBoxLayout, QLabel, QProgressBar,
+        QPushButton, QSizePolicy, QFormLayout)
+
 from PyQt5.QtGui import QPen, QBrush, QColor
 import config
-import time
 
 class ForestViewer(QMainWindow):
-    resized = pyqtSignal()
     def  __init__(self, forest, parent=None):
         super(ForestViewer, self).__init__(parent=parent)
         self.forest = forest
-        self.ForestDialog = ForestDialog( self.forest ) #or docker widget?
-        self.resized.connect( self.handleResize )
+        self.ForestDialog = ForestDialog( self.forest )
         self.setCentralWidget( self.ForestDialog )
         self.setWindowTitle("Chestnut Blight Forest Simulator")
         QApplication.setStyle(QStyleFactory.create('Fusion'))
-#        QApplication.setPalette(QApplication.palette())
-
-    def resizeEvent(self, event):
-        self.resized.emit()
-        return super(ForestViewer, self).resizeEvent(event)
 
     def handleResize(self):
         self.ForestDialog.paintGrid()
 
 class ForestDialog(QDialog):
-    resized2 = pyqtSignal()
+    resized = pyqtSignal()
     def __init__(self, forest=None, parent=None):
         super(ForestDialog, self).__init__(parent=parent)
         self.forest = forest
-        self.resized2.connect( self.dudemang )
+        self.resized.connect( self.handleResizeEvent )
         self.setContentsMargins(1,1,1,1)
         self.resize(1200,1000)
 
@@ -62,11 +56,11 @@ class ForestDialog(QDialog):
         self.mainLayout.setColumnStretch(1, 2)
         self.setLayout(self.mainLayout)
 
-    def resizeEvent(self, event):
-        self.resized2.emit()
+    def handleResizeEvent(self, event):
+        self.resized.emit()
         return super(ForestDialog, self).resizeEvent(event)
 
-    def dudemang(self):
+    def handleResize(self):
         self.paintGrid()
 
     def createForestView(self):
@@ -75,10 +69,7 @@ class ForestDialog(QDialog):
         forest_scene = QGraphicsScene() #init size?
         forest_scene.setBackgroundBrush(QColor("orange"))
         self.forest_view = QGraphicsView(forest_scene)
-#        self.forest_view.setBackgroundBrush(QBrush(QColor("blue")))
-#        self.forest_view.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Maximum)
         self.forest_view_box.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)
-        #size policy for box?
         layout = QHBoxLayout(self)
         layout.addWidget(self.forest_view, 1)
         
@@ -89,7 +80,6 @@ class ForestDialog(QDialog):
 
     def transition(self):
         self.forest.set_next_year()
-        print("done!")
         self.paintGrid()
 
             
@@ -112,7 +102,6 @@ class ForestDialog(QDialog):
         layout.addRow(QLabel("Years to Simulate:"), years_to_sim)
         layout.addRow(QLabel("Update Delay (seconds):"), update_delay)
         layout.addRow(button)
-
 
         self.ForestControlBox.setLayout(layout)
 
@@ -172,7 +161,7 @@ if __name__ == '__main__':
     import sys
 
     app = QApplication(sys.argv)    
-    test_forest = Forest(25, 25)
+    test_forest = Forest(50, 50)
     test_forest.init_random()
     gallery = ForestViewer( test_forest )
     gallery.show()

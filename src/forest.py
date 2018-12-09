@@ -9,35 +9,37 @@ under some predefined biological-enviornment parameters defined in config.py
 """
 
 from tree import Tree
+import config
 import sys
 import math
-import config
-from random import random, shuffle
+from random import random, seed, shuffle
 from copy import copy, deepcopy
+from datetime import datetime
 
 class Forest:
     
-    num_deaths, num_births = 0, 0
+    num_births, num_deaths = 0, 0
+    hv_infect_map = None
+    v_infect_map = None
     
     # TODO: Add getters, setters?
-    def __init__(self, rows, cols):
+    def __init__(self, rows, cols, rand_seed = datetime.now()):
         self.rows = rows
         self.cols = cols
         self.grid = [[None] * cols for i in range(rows)]
-    
+        seed(rand_seed)
+
     # Generates a random Tree grid based on 2002 CDF data
     def generate_grid(self):
         new_grid = [[None] * self.cols for i in range(self.rows)]
-        for row in range(self.rows):
-            for col in range(self.cols):
-                rating = 0 # TODO enum?
+        for row in range(0, self.rows):
+            for col in range(0, self.cols):
+                rating = 0
                 stage = 0
-                rand = random()
-                if rand < config.TREE_DENSITY:
-                    tree_type = random()
+                if random() < config.TREE_DENSITY:
                     i = 0
                     while i <= len(config.POP_2002_CDF):
-                        if tree_type < config.POP_2002_CDF[i]:
+                        if random() < config.POP_2002_CDF[i]:
                             rating = int(i / config.DBH_STAGE4) + 1
                             stage = int(i % config.DBH_STAGE4) + 1
                             break
@@ -67,8 +69,6 @@ class Forest:
         coords = [(r,c) for r in range(self.rows) for c in range(self.cols)]
         shuffle(coords)
         
-        max_infections = 
-        
         for coord in coords:
             r = coord[0]
             c = coord[1]
@@ -76,21 +76,19 @@ class Forest:
             t_tree = next_year[r][c] # transformed tree
             
             if tree.stage != config.DEAD:
-                rand = random()
                 next_stage_row = int(((tree.rating - 1) * config.DBH_STAGE4)) \
                     + (tree.stage - 1)
                     
                 for i in range(0, config.DBH_STAGE4 + 1):
-                    if rand < config.NEW_STAGE_CDF[next_stage_row][i]:
+                    if random() < config.NEW_STAGE_CDF[next_stage_row][i]:
                         t_tree.stage = i
                         break
                 
-                rand = random()
                 next_rating_row = int(tree.treatment * (config.HEALTHY - 1)) \
                     + (tree.rating - 1)
                 
                 for i in range(0, config.HEALTHY - 1):
-                    if rand < config.NEW_RATING_CDF[next_rating_row][i]:
+                    if random() < config.NEW_RATING_CDF[next_rating_row][i]:
                         t_tree.rating = i + 1
                         break
                 
@@ -121,11 +119,17 @@ class Forest:
         
         return next_year
     
+    def gen_position_stage_list_distribution_map(self):
+        for r in range(self.rows):
+            for c in range(self.cols):
+                print("a")
+    
+    
 #    Prelim    
     def infect(self, r, c, rating, prev_year, next_year):
         max_infections = round(math.exp(config.NUM_INF_CDF[0] * random() \
             - config.NUM_INF_CDF[1]))
-        events = round( random() * max_infections )
+        events = int(round( random() * max_infections ))
         if events < 1:
             events = 1
         if rating == config.V:
@@ -134,9 +138,8 @@ class Forest:
             distribution = config.HV_INFECT_RANGE_PROB_8M_INT
         infections = 0
         sporings = 0
-#        print("events", events)
-#        print("infections", infections)
-        while infections < events and sporings < config.SPORE_SCALAR * events:
+        max_sporings = config.SPORE_SCALAR * events
+        while infections < events and sporings < max_sporings:
             if rating == config.HV and random() < config.PER_HV_TO_HV:
                 infect_type = config.HV
             else:
@@ -146,20 +149,14 @@ class Forest:
                 infect_range = config.DIST_CLASS
             attempt_coord = self.get_random_point(r, c, infect_range)
             point_dist = self.get_distance(r, c, attempt_coord[0], attempt_coord[1])
-            spore_land_prob = distribution[0]
             land_prob_index = int(point_dist / config.DIST_CLASS)
             spore_land_prob = distribution[land_prob_index]
-#            while i < len(distribution):
-#                if point_dist < (i * config.DIST_CLASS):
-#                    spore_land_prob = distribution[i] - distribution[i - 1]
-#                i += 1
             attempt_tree = prev_year[attempt_coord[0]][attempt_coord[1]]
             if random() < spore_land_prob and attempt_tree.stage != config.DEAD:
                 next_year[attempt_tree.r][attempt_tree.c].rating = infect_type
                 infections += 1
             sporings += 1
 
-    
     # Returns a tuple coordinate (r', c') of a random point at
     # 'range' distance of coordinate (r, c)
     def get_random_point(self, r, c, p_range):
@@ -168,7 +165,7 @@ class Forest:
         increment_r = random() < 0.5
         increment_c = random() < 0.5
         distance = sys.float_info.max
-        while abs(distance - p_range) > config.SITE_SIZE and distance > 0:
+        while abs(distance - p_range) > config.SITE_SIZE and distance != 0:
             if random() < 0.5:
                 p_r = p_r + 1 if increment_r else p_r - 1
                 if not self.is_in_grid(p_r, p_c):
@@ -181,29 +178,25 @@ class Forest:
                     increment_c = not increment_c
             distance = self.get_distance(r, c, p_r, p_c)
         return ( p_r, p_c )
-
-
-
+        
     def is_in_grid(self, r, c):
         return r >= 0 and c >= 0 and r < self.rows and c < self.cols
 
     def get_distance(self, r1, c1, r2, c2):
-        return math.sqrt(math.pow(abs(r2 - r1) * config.SITE_SIZE, 2) \
-            + math.pow(abs(c2 - c1) * config.SITE_SIZE, 2))
+        return math.sqrt(math.pow((r2 - r1) * config.SITE_SIZE, 2) \
+            + math.pow((c2 - c1) * config.SITE_SIZE, 2))
 
     # Generates a new grid for the Forest and sets the active grid to
     # the grid of the next year
     def set_next_year(self):
         next_year = self.get_next_year()
-        self.grid = next_year
-
-            
+        self.grid = next_year       
                 
 # Testing
 #forest = Forest(50,50)
 #forest.grid = forest.generate_grid() # maybe initialize on new grid?
 #forest.print_forest()
-#for i in range( 0, 20 ):
+#for i in range( 0, 10 ):
 #    forest.set_next_year()
 #    print(i)
 #forest.print_forest()
