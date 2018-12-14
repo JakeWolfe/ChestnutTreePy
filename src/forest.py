@@ -22,7 +22,6 @@ class Forest:
     hv_infect_map = None
     v_infect_map = None
     
-    # TODO: Add getters, setters?
     def __init__(self, rows, cols, rand_seed = datetime.now()):
         self.rows = rows
         self.cols = cols
@@ -56,9 +55,6 @@ class Forest:
             # for tree in row
                 #tree.print_tree()
         print("---------------------------")
-    
-    def init_random(self):
-        self.grid = self.generate_grid()
         
     # Returns a 2D list of lists of trees, i.e., the new grid 
     # TODO: Add infect function
@@ -93,7 +89,7 @@ class Forest:
                         break
                 
                 if tree.rating == config.V or tree.rating == config.HV:
-                    self.infect(tree.rating, r, c, prev_year, next_year)
+                    self.infect_v2(tree.rating, r, c, prev_year, next_year)
                 
                 rep = config.REPRODUCTION[tree.rating - 1][tree.stage - 1]
                 l = math.exp(-rep)
@@ -119,16 +115,14 @@ class Forest:
         
         return next_year
     
-    def gen_position_stage_list_distribution_map(self):
-        for r in range(self.rows):
-            for c in range(self.cols):
-                print("a")
+#    def gen_position_stage_list_distribution_map(self):
+#        for r in range(self.rows):
+#            for c in range(self.cols):
+#                print("a")
     
-    
-#    Prelim    
-    def infect(self, r, c, rating, prev_year, next_year):
-        max_infections = round(math.exp(config.NUM_INF_CDF[0] * random() \
-            - config.NUM_INF_CDF[1]))
+    def infect_v2(self, r, c, rating, prev_year, next_year):
+        max_infections = int(round(math.exp(config.NUM_INF_CDF[0] * random() \
+            - config.NUM_INF_CDF[1])))
         events = int(round( random() * max_infections ))
         if events < 1:
             events = 1
@@ -147,19 +141,49 @@ class Forest:
             infect_range = random() * len(distribution) * config.DIST_CLASS
             if infect_range <= config.DIST_CLASS:
                 infect_range = config.DIST_CLASS
-            attempt_coord = self.get_random_point(r, c, infect_range)
-            point_dist = self.get_distance(r, c, attempt_coord[0], attempt_coord[1])
-            land_prob_index = int(point_dist / config.DIST_CLASS)
+            attempt_coord = self.get_random_point_at_range(r, c, infect_range)
+#            point_dist = self.get_distance(r, c, attempt_coord[0], attempt_coord[1])
+#            t1 = int(point_dist / config.DIST_CLASS)
+#            t2 = int(infect_range / config.DIST_CLASS)
+#            print(infect_range, point_dist)
+            land_prob_index = int(infect_range / config.DIST_CLASS)
             spore_land_prob = distribution[land_prob_index]
             attempt_tree = prev_year[attempt_coord[0]][attempt_coord[1]]
             if random() < spore_land_prob and attempt_tree.stage != config.DEAD:
                 next_year[attempt_tree.r][attempt_tree.c].rating = infect_type
                 infections += 1
             sporings += 1
-
+    
+    def infect_v1(self, r, c, rating, prev_year, next_year):
+        if rating == config.V:
+            spore_prob = config.PROB_OF_SPORE_VIRU
+        else:
+            spore_prob = config.PROB_OF_SPORE_HYPO
+        num_infections = 0
+        if random() < spore_prob:
+            i_power = config.NUM_INF_CDF[0] * random() - config.NUM_INF_CDF[1]
+            num_infections = int(round(math.exp(i_power)))
+        for i in range(0, num_infections):
+            if rating == config.HV and random() < config.PER_HV_TO_HV:
+                infect_type = config.HV
+                dist_coefficient = config.HV_DIST_OLD
+            else:
+                infect_type = config.V
+                dist_coefficient = config.V_DIST_OLD
+            # Calculate distance incrementally for readability
+            coefficient_power = dist_coefficient[0] * random() - dist_coefficient[1]
+            distance = round(math.exp(coefficient_power) * config.DIST_CLASS)
+            distance = int( distance / config.SITE_SIZE )
+            
+            spore_destination = self.get_random_point_in_range(r, c, distance)
+            dest_r = spore_destination[0]
+            dest_c = spore_destination[1]
+            if self.is_in_grid(dest_r, dest_c):
+                next_year[dest_r][dest_c].rating = infect_type
+        
     # Returns a tuple coordinate (r', c') of a random point at
-    # 'range' distance of coordinate (r, c)
-    def get_random_point(self, r, c, p_range):
+    # 'p_range' distance of coordinate (r, c)
+    def get_random_point_at_range(self, r, c, p_range):
         p_r = r
         p_c = c
         increment_r = random() < 0.5
@@ -178,6 +202,19 @@ class Forest:
                     increment_c = not increment_c
             distance = self.get_distance(r, c, p_r, p_c)
         return ( p_r, p_c )
+    
+    # Copied straight from original java program
+    # Does not guarantee point is in grid range
+    def get_random_point_in_range(self, r, c, p_range):
+        if random() < 0.5:
+            rand_r = -int((random() * p_range) - 1)
+        else:
+            rand_r = int((random() * p_range) + 1)
+        if random() < 0.5:
+            rand_c = -int((random() * p_range) - 1)
+        else:
+            rand_c = int((random() * p_range) + 1)
+        return ( rand_r + r, rand_c + c )
         
     def is_in_grid(self, r, c):
         return r >= 0 and c >= 0 and r < self.rows and c < self.cols

@@ -4,10 +4,6 @@ Created on Sun Oct 21 17:50:28 2018
 
 A visualization for the Chestnut Blight fungus simulation.
 
-
-A Forest keeps track of all of trees contained within some rows x cols grid
-under some predefined biological-enviornment parameters defined in config.py
-
 @author: Quentin Goehrig
 """ 
 
@@ -30,9 +26,6 @@ class ForestViewer(QMainWindow):
         self.setWindowTitle("Chestnut Blight Forest Simulator")
         QApplication.setStyle(QStyleFactory.create('Fusion'))
 
-    def handleResize(self):
-        self.ForestDialog.paintGrid()
-
 class ForestDialog(QDialog):
     resized = pyqtSignal()
     def __init__(self, forest=None, parent=None):
@@ -50,8 +43,6 @@ class ForestDialog(QDialog):
         self.mainLayout.setRowStretch(0, 1)
         self.mainLayout.setColumnStretch(0, 1)
         self.mainLayout.addWidget(self.ForestControlBox, 0, 1)
-        #mainLayout.setRowStretch(0, 1)
-        #mainLayout.setRowStretch(0, 1)
         self.mainLayout.setColumnStretch(0, 5)
         self.mainLayout.setColumnStretch(1, 2)
         self.setLayout(self.mainLayout)
@@ -64,7 +55,6 @@ class ForestDialog(QDialog):
         self.paintGrid()
 
     def createForestView(self):
-        
         self.forest_view_box = QGroupBox("Forest View")
         forest_scene = QGraphicsScene() #init size?
         forest_scene.setBackgroundBrush(QColor("orange"))
@@ -161,99 +151,10 @@ if __name__ == '__main__':
     import sys
 
     app = QApplication(sys.argv)    
-    test_forest = Forest(50, 50)
-    test_forest.init_random()
-    gallery = ForestViewer( test_forest )
-    gallery.show()
+    test_forest = Forest(30, 30)
+    test_forest.grid = test_forest.generate_grid()
+    fv = ForestViewer( test_forest )
+    fv.show()
     # Use this when debugging w/ IPython in Spyder IDE
     app.aboutToQuit.connect(app.deleteLater)
     sys.exit(app.exec_()) 
-
-
-
-
-
-
-
-
-
-#def advanceProgressBar(self):
-#    curVal = self.progressBar.value()
-#    maxVal = self.progressBar.maximum()
-#    self.progressBar.setValue(curVal + (maxVal - curVal) / 100)
-#
-#
-#def createProgressBar(self):
-#    self.progressBar = QProgressBar()
-#    self.progressBar.setRange(0, 10000)
-#    self.progressBar.setValue(0)
-#
-#    timer = QTimer(self)
-#    timer.timeout.connect(self.advanceProgressBar)
-#    timer.start(1000)
-
-## -*- coding: utf-8 -*-
-#"""
-#Created on Mon Oct 29 16:28:42 2018
-#
-#@author: Quentin Goehrig
-#"""
-#
-#from PyQt5 import QtCore, QtGui, QtWidgets
-#from PyQt5.QtCore import QDateTime, Qt, QTimer, QRect, QRectF, QPoint
-#from PyQt5.QtWidgets import (QApplication, QCheckBox, QComboBox, QDateTimeEdit,
-#        QDial, QDialog, QGridLayout, QGroupBox, QHBoxLayout, QLabel, QLineEdit,
-#        QProgressBar, QPushButton, QRadioButton, QScrollBar, QSizePolicy,
-#        QSlider, QSpinBox, QStyleFactory, QTableWidget, QTabWidget, QTextEdit,
-#        QVBoxLayout, QWidget, QMenuBar, QAction, QMainWindow, 
-#        QGraphicsGridLayout, QGraphicsScene, QGraphicsView)
-#from PyQt5.QtGui import QPen, QBrush, QColor
-#from forest import Forest
-#
-#
-#class ForestViewer(QtWidgets.QMainWindow):
-#    resized = QtCore.pyqtSignal()
-#    def  __init__(self, forest, parent=None):
-#        super(ForestViewer, self).__init__(parent=parent)
-#        self.forest = forest
-#        
-#        #self.createDockerWidget()
-#        
-#        self.createForestView()
-#        self.resized.connect(self.handleResize)
-#
-#
-#    def resizeEvent(self, event):
-#        self.resized.emit()
-#        return super(FV_Window, self).resizeEvent(event)
-#
-#    def handleResize(self):
-#        print("resize")
-#    
-#    def createForestView(self):
-#        forest_scene = QGraphicsScene(self.home)
-#        if self.forest == None:
-#            print("no forest")
-#            return None
-#        cell_w = 10
-#        cell_h = 10
-#        grid = self.forest
-#        for r in range(grid.rows):
-#            for c in range(grid.cols):
-#                rect = QRectF(c * cell_w, r * cell_h, cell_w, cell_h)
-#                brush = QBrush(QColor("white"))
-#                forest_scene.addRect(rect, QPen(), brush)        
-#
-#        self.forest_view = QGraphicsView(forest_scene)
-#
-#
-#if __name__ == "__main__":
-#    import sys
-#    app = QtWidgets.QApplication(sys.argv)
-#    app.aboutToQuit.connect(app.deleteLater)
-#    test_forest = Forest(10, 9)
-#    test_forest.init_random()
-#    fw = ForestViewer(test_forest )
-#    fw.show()
-#    sys.exit(app.exec_())
-#    sys.quit()

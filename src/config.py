@@ -165,6 +165,11 @@ NEW_STAGE_CDF = [
     [0.013, 0.013, 0.013, 0.013, 1]
 ]
 
+# Old distance coefficients for infect
+V_DIST_OLD = [ 4.695, 1.777 ]
+HV_DIST_OLD = [ 7.153, 4.049 ]
+
+
 """
 -------------------------------------------------------
               NEURAL NETWORK SETTINGS
