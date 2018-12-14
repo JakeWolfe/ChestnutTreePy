@@ -50,9 +50,9 @@ class Forest:
     def print_forest(self):
         grid = self.grid
         for row in grid:
-            print(' '.join([str(tree.stage) for tree in row]))
-            # above only prints stage, uncomment below for full tree details
-            # for tree in row
+            for tree in row:
+                print(' '.join([str(tree.stage)]))
+                # uncomment below for full tree details
                 #tree.print_tree()
         print("---------------------------")
         
@@ -120,6 +120,14 @@ class Forest:
 #            for c in range(self.cols):
 #                print("a")
     
+    """
+    The experimental infect function. This is significantly slower than the
+    original infect function. This is due to the naive approach the function
+    uses to select trees for infection. However, this method incorporates
+    distance when selecting a tree. The intention is to provide a higher
+    likelyhood of an infection for trees that are closer in distance to the
+    source tree while still maintaining expected simulation results.
+    """
     def infect_v2(self, r, c, rating, prev_year, next_year):
         max_infections = int(round(math.exp(config.NUM_INF_CDF[0] * random() \
             - config.NUM_INF_CDF[1])))
@@ -153,7 +161,12 @@ class Forest:
                 next_year[attempt_tree.r][attempt_tree.c].rating = infect_type
                 infections += 1
             sporings += 1
-    
+            
+    """
+    The original infect function. This is much faster than the newer infect
+    function, however, it does not incorporate distance to tree when selecting
+    new trees to be infected
+    """
     def infect_v1(self, r, c, rating, prev_year, next_year):
         if rating == config.V:
             spore_prob = config.PROB_OF_SPORE_VIRU
