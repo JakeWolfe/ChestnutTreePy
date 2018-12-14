@@ -33,7 +33,6 @@ class ForestDialog(QDialog):
         self.forest = forest
         self.resized.connect( self.handleResizeEvent )
         self.setContentsMargins(1,1,1,1)
-        self.resize(1200,1000)
 
         self.createForestView()
         self.createForestControl()
@@ -67,18 +66,16 @@ class ForestDialog(QDialog):
         if self.forest != None:
             self.paintGrid()
 
-
     def transition(self):
         self.forest.set_next_year()
         self.paintGrid()
-
             
     def createForestControl(self):
 
         self.ForestControlBox = QGroupBox("Forest Control")
         
         years_to_sim = QSpinBox(self.ForestControlBox)
-        years_to_sim.setValue(50)
+        years_to_sim.setValue(1)
         
         update_delay = QSpinBox(self.ForestControlBox)
         update_delay.setValue(0)
@@ -151,8 +148,8 @@ if __name__ == '__main__':
     import sys
 
     app = QApplication(sys.argv)    
-    test_forest = Forest(30, 30)
-    test_forest.grid = test_forest.generate_grid()
+    test_forest = Forest(50, 50)
+    test_forest.set_random_grid()
     fv = ForestViewer( test_forest )
     fv.show()
     # Use this when debugging w/ IPython in Spyder IDE

@@ -5,6 +5,8 @@ Created on Sun Oct 21 17:50:28 2018
 A Forest keeps track of all of trees contained within some rows x cols grid
 under some predefined biological-enviornment parameters defined in config.py
 
+The Forest class contains state functionality of a MDP.
+
 @author: Quentin Goehrig
 """
 
@@ -18,18 +20,21 @@ from datetime import datetime
 
 class Forest:
     
-    num_births, num_deaths = 0, 0
+    num_healthy, num_viru, num_hypo, = 0, 0, 0
+    # Infect maps to be used for for future work on infect_v2
+    # Maps a point -> list of available points
     hv_infect_map = None
     v_infect_map = None
     
-    def __init__(self, rows, cols, rand_seed = datetime.now()):
+    def __init__(self, rows, cols, infect_version = 1, rand_seed = datetime.now()):
         self.rows = rows
         self.cols = cols
+        self.infect_version = infect_version
         self.grid = [[None] * cols for i in range(rows)]
         seed(rand_seed)
 
     # Generates a random Tree grid based on 2002 CDF data
-    def generate_grid(self):
+    def set_random_grid(self):
         new_grid = [[None] * self.cols for i in range(self.rows)]
         for row in range(0, self.rows):
             for col in range(0, self.cols):
@@ -45,7 +50,7 @@ class Forest:
                         i += 1
                 new_tree = Tree(row, col, rating, stage, config.UNTREATED)
                 new_grid[row][col] = new_tree
-        return new_grid
+        self.grid = new_grid
     
     def print_forest(self):
         grid = self.grid
@@ -57,7 +62,6 @@ class Forest:
         print("---------------------------")
         
     # Returns a 2D list of lists of trees, i.e., the new grid 
-    # TODO: Add infect function
     def get_next_year(self):
         prev_year = self.grid
         next_year = deepcopy(self.grid)
@@ -89,7 +93,10 @@ class Forest:
                         break
                 
                 if tree.rating == config.V or tree.rating == config.HV:
-                    self.infect_v2(tree.rating, r, c, prev_year, next_year)
+                    if self.infect_version == 1:
+                        self.infect_v1(tree.rating, r, c, prev_year, next_year)
+                    elif self.infect_version == 2:
+                        self.infect_v2(tree.rating, r, c, prev_year, next_year)
                 
                 rep = config.REPRODUCTION[tree.rating - 1][tree.stage - 1]
                 l = math.exp(-rep)
@@ -110,15 +117,16 @@ class Forest:
                     if prev_year[s_r][s_c].stage == config.DEAD:
                         next_year[s_r][s_c].stage = config.DBH_STAGE1
                         next_year[s_r][s_c].rating = config.HEALTHY
-                        self.num_births += 1
+#                        self.num_births += 1
                         rand_poisson -= 1
         
         return next_year
     
-#    def gen_position_stage_list_distribution_map(self):
-#        for r in range(self.rows):
-#            for c in range(self.cols):
-#                print("a")
+    # State transition
+    def set_next_year(self):
+        next_year = self.get_next_year()
+        self.grid = next_year
+        self.update_stats()
     
     """
     The experimental infect function. This is significantly slower than the
@@ -235,16 +243,21 @@ class Forest:
     def get_distance(self, r1, c1, r2, c2):
         return math.sqrt(math.pow((r2 - r1) * config.SITE_SIZE, 2) \
             + math.pow((c2 - c1) * config.SITE_SIZE, 2))
-
-    # Generates a new grid for the Forest and sets the active grid to
-    # the grid of the next year
-    def set_next_year(self):
-        next_year = self.get_next_year()
-        self.grid = next_year       
-                
+    
+    def update_stats(self):
+        self.num_healthy, self.num_hypo, self.num_viru = 0, 0, 0
+        for r in range(0, self.rows):
+            for c in range(0, self.cols):
+                if self.grid[r][c].rating == config.HEALTHY:
+                    self.num_healthy += 1
+                elif self.grid[r][c].rating == config.HV:
+                    self.num_hypo += 1
+                elif self.grid[r][c].rating == config.V:
+                    self.num_viru += 1
+    
 # Testing
 #forest = Forest(50,50)
-#forest.grid = forest.generate_grid() # maybe initialize on new grid?
+#forest.set_random_grid()
 #forest.print_forest()
 #for i in range( 0, 10 ):
 #    forest.set_next_year()
